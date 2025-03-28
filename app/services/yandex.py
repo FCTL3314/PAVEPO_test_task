@@ -1,15 +1,15 @@
 from httpx import AsyncClient
 
-from app import config
+from app import settings
 from app.schemas.auth import YandexUserInfo
 
 
 def get_yandex_oauth_url() -> str:
     return (
-        f"{config.YANDEX_AUTH_URL}"
+        f"{settings.YANDEX_AUTH_URL}"
         f"?response_type=code"
-        f"&client_id={config.YANDEX_CLIENT_ID}"
-        f"&redirect_uri={config.YANDEX_REDIRECT_URI}"
+        f"&client_id={settings.YANDEX_CLIENT_ID}"
+        f"&redirect_uri={settings.YANDEX_REDIRECT_URI}"
     )
 
 

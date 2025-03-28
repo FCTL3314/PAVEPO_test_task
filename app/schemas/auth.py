@@ -1,7 +1,7 @@
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from pydantic import BaseModel, EmailStr
 
-from app import config
+from app import settings
 
 
 class AuthTokens(BaseModel):
@@ -32,5 +32,5 @@ class YandexUserInfo(BaseModel):
 
 
 oauth2_scheme = OAuth2AuthorizationCodeBearer(
-    authorizationUrl=config.YANDEX_AUTH_URL, tokenUrl=config.YANDEX_TOKEN_URL
+    authorizationUrl=settings.YANDEX_AUTH_URL, tokenUrl=settings.YANDEX_TOKEN_URL
 )

@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from httpx import AsyncClient
 from starlette.responses import RedirectResponse
 
-from app import config
+from app import settings
 from app.dependencies.auth import Oauth2SchemeDep
 from app.schemas.auth import AuthTokens, YandexUserInfo
 from app.services.yandex import get_yandex_oauth_url, get_yandex_user_info
@@ -21,12 +21,12 @@ async def yandex_login() -> RedirectResponse:
 async def yandex_auth_callback(code: str) -> AuthTokens:
     async with AsyncClient() as client:
         response = await client.post(
-            config.YANDEX_TOKEN_URL,
+            settings.YANDEX_TOKEN_URL,
             data={
                 "grant_type": "authorization_code",
                 "code": code,
-                "client_id": config.YANDEX_CLIENT_ID,
-                "client_secret": config.YANDEX_CLIENT_SECRET,
+                "client_id": settings.YANDEX_CLIENT_ID,
+                "client_secret": settings.YANDEX_CLIENT_SECRET,
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )

@@ -10,6 +10,13 @@ class Config(BaseSettings):
     DATABASE_PORT: int = env_config("DATABASE_PORT", cast=int)
     DATABASE_USER: str = env_config("DATABASE_USER", cast=str)
     DATABASE_PASSWORD: str = env_config("DATABASE_PASSWORD", cast=str)
+    SQLALCHEMY_URI: str = (
+        f"postgresql+asyncpg://"
+        f"{DATABASE_USER}:"
+        f"{DATABASE_PASSWORD}@"
+        f"{DATABASE_HOST}/"
+        f"{DATABASE_NAME}"
+    )
 
     YANDEX_CLIENT_ID: str = env_config("YANDEX_CLIENT_ID", cast=str)
     YANDEX_CLIENT_SECRET: str = env_config("YANDEX_CLIENT_SECRET", cast=str)
