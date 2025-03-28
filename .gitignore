@@ -174,4 +174,4 @@ cython_debug/
 .pypirc
 
 # Docker vulumes
-./docker/volumes
+docker/volumes
