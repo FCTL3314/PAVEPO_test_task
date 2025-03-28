@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from pydantic import BaseModel, EmailStr
 
@@ -34,3 +36,9 @@ class YandexUserInfo(BaseModel):
 oauth2_scheme = OAuth2AuthorizationCodeBearer(
     authorizationUrl=settings.YANDEX_AUTH_URL, tokenUrl=settings.YANDEX_TOKEN_URL
 )
+
+class User(BaseModel):
+    id: int
+    username: str
+    password: str
+    created_at: datetime
