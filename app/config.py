@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 
 class Config(BaseSettings):
     DEBUG: bool = env_config("DEBUG", cast=bool, default=False)
+    SECRET_KEY: str = env_config("SECRET_KEY", cast=str)
 
     DATABASE_NAME: str = env_config("DATABASE_NAME", cast=str)
     DATABASE_HOST: str = env_config("DATABASE_HOST", cast=str)

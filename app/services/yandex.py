@@ -1,7 +1,11 @@
+from http import HTTPStatus
+from typing import Any
+
+from fastapi import HTTPException
 from httpx import AsyncClient
 
 from app import settings
-from app.schemas.auth import YandexUserInfo
+from app.schemas.auth import YandexUser
 
 
 def get_yandex_oauth_url() -> str:
@@ -13,10 +17,27 @@ def get_yandex_oauth_url() -> str:
     )
 
 
-async def get_yandex_user_info(access_token: str) -> YandexUserInfo:
+async def get_yandex_user(access_token: str) -> YandexUser:
     async with AsyncClient() as client:
         response = await client.get(
             "https://login.yandex.ru/info",
             headers={"Authorization": f"OAuth {access_token}"},
         )
-    return YandexUserInfo.model_validate(response.json())
+    return YandexUser.model_validate(response.json())
+
+
+async def get_yandex_token_data(code: str) -> dict[str, Any]:
+    async with AsyncClient() as client:
+        response = await client.post(
+            settings.YANDEX_TOKEN_URL,
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "client_id": settings.YANDEX_CLIENT_ID,
+                "client_secret": settings.YANDEX_CLIENT_SECRET,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        response.raise_for_status()
+
+    return response.json()

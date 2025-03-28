@@ -8,6 +8,7 @@ from app import settings
 
 class AuthTokens(BaseModel):
     access_token: str
+    refresh_token: str
 
 
 class YandexDefaultPhone(BaseModel):
@@ -15,7 +16,7 @@ class YandexDefaultPhone(BaseModel):
     number: str
 
 
-class YandexUserInfo(BaseModel):
+class YandexUser(BaseModel):
     id: str
     login: str
     client_id: str
@@ -37,8 +38,14 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
     authorizationUrl=settings.YANDEX_AUTH_URL, tokenUrl=settings.YANDEX_TOKEN_URL
 )
 
+
 class User(BaseModel):
     id: int
+    yandex_id: str
     username: str
-    password: str
+    email: str
+    password_hash: str
     created_at: datetime
+
+    class Config:
+        orm_mode = True
