@@ -6,8 +6,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
 
 from app.dependencies import SessionDep
-from app.repository.auth import get_or_create_user_by_yandex_user, get_user_by_id
-from app.schemas.auth import AuthTokens, User as UserSchema, RefreshTokensInput
+from app.exceptions import UserNotFound
+from app.repository.auth import (
+    get_or_create_user_by_yandex_user,
+    get_user_by_id,
+    update_user,
+)
+from app.schemas.auth import (
+    AuthTokens,
+    RefreshTokensInput,
+    UpdateUser,
+    User,
+    OutputUser,
+)
 from app.services.auth import (
     get_current_user,
     decode_refresh_token,
@@ -47,14 +58,29 @@ async def yandex_auth_callback(
     return create_auth_tokens_for_user_id(user.id)
 
 
-@router.get("/user/me", response_model=UserSchema)
-async def user_me(
+@router.get("/user/me", response_model=User)
+async def get_user_me(
     session: AsyncSession = SessionDep, authorization: str = Header(...)
-) -> UserSchema:
-    current_user = await get_current_user(session, authorization)
-    if current_user is None:
+) -> User:
+    try:
+        current_user = await get_current_user(session, authorization)
+    except UserNotFound:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found")
     return current_user
+
+
+@router.patch("/user/me", response_model=OutputUser)
+async def update_user_me(
+    updated_user: UpdateUser,
+    session: AsyncSession = SessionDep,
+    authorization: str = Header(...),
+) -> User:
+    try:
+        current_user = await get_current_user(session, authorization)
+    except UserNotFound:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found")
+    updated_user = await update_user(session, current_user, updated_user)
+    return updated_user
 
 
 @router.post("/token/refresh", response_model=AuthTokens)
@@ -73,9 +99,9 @@ async def refresh_access_token(
             detail="Token payload invalid: missing subject",
         )
 
-    user = await get_user_by_id(session, user_id)
-
-    if not user:
+    try:
+        user = await get_user_by_id(session, user_id)
+    except UserNotFound:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found")
 
     return create_auth_tokens_for_user_id(user.id)
