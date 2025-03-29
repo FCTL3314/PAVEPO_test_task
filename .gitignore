@@ -175,3 +175,6 @@ cython_debug/
 
 # Docker vulumes
 docker/volumes
+
+# Media
+./media
