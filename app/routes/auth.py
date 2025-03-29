@@ -6,12 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
 
 from app.dependencies import SessionDep
-from app.repository.auth import get_or_create_user_by_yandex_user
-from app.schemas.auth import AuthTokens, User as UserSchema
+from app.repository.auth import get_or_create_user_by_yandex_user, get_user_by_id
+from app.schemas.auth import AuthTokens, User as UserSchema, RefreshTokensInput
 from app.services.auth import (
-    create_access_token,
-    create_refresh_token,
     get_current_user,
+    decode_refresh_token,
+    create_auth_tokens_for_user_id,
 )
 from app.services.yandex import (
     get_yandex_oauth_url,
@@ -44,12 +44,7 @@ async def yandex_auth_callback(
     yandex_user = await get_yandex_user(yandex_access_token)
     user = await get_or_create_user_by_yandex_user(session, yandex_user)
 
-    return AuthTokens.model_validate(
-        {
-            "access_token": create_access_token(user.id),
-            "refresh_token": create_refresh_token(user.id),
-        }
-    )
+    return create_auth_tokens_for_user_id(user.id)
 
 
 @router.get("/user/me", response_model=UserSchema)
@@ -60,3 +55,27 @@ async def user_me(
     if current_user is None:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found")
     return current_user
+
+
+@router.post("/token/refresh", response_model=AuthTokens)
+async def refresh_access_token(
+    refresh_tokens_input: RefreshTokensInput, session: AsyncSession = SessionDep
+) -> AuthTokens:
+    try:
+        payload = decode_refresh_token(refresh_tokens_input.refresh_token)
+    except Exception as e:
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail=str(e))
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Token payload invalid: missing subject",
+        )
+
+    user = await get_user_by_id(session, user_id)
+
+    if not user:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found")
+
+    return create_auth_tokens_for_user_id(user.id)

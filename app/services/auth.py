@@ -12,9 +12,9 @@ from app.constants import (
     ALGORITHM,
     REFRESH_TOKEN_EXPIRE_DAYS,
 )
-from app.dependencies import SessionDep
 from app.models.auth import User
 from app.repository.auth import get_user_by_id
+from app.schemas.auth import AuthTokens
 
 
 def create_jwt_token(
@@ -77,3 +77,10 @@ async def get_current_user(
         )
 
     return await get_user_by_id(session, user_id)
+
+
+def create_auth_tokens_for_user_id(user_id: int | str) -> AuthTokens:
+    return AuthTokens(
+        access_token=create_access_token(user_id),
+        refresh_token=create_refresh_token(user_id),
+    )

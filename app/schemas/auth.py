@@ -11,6 +11,10 @@ class AuthTokens(BaseModel):
     refresh_token: str
 
 
+class RefreshTokensInput(BaseModel):
+    refresh_token: str
+
+
 class YandexDefaultPhone(BaseModel):
     id: int
     number: str
@@ -48,4 +52,4 @@ class User(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
