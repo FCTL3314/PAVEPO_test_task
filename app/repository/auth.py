@@ -40,7 +40,9 @@ async def get_user_by_id(session: AsyncSession, _id: int | str) -> User:
     return user
 
 
-async def update_user(session: AsyncSession, current_user: User, updated_user: UpdateUserSchema) -> User:
+async def update_user(
+    session: AsyncSession, current_user: User, updated_user: UpdateUserSchema
+) -> User:
     try:
         user = await get_user_by_id(session, current_user.id)
 
@@ -53,5 +55,15 @@ async def update_user(session: AsyncSession, current_user: User, updated_user: U
         await session.refresh(user)
 
         return user
+    except NoResultFound:
+        raise UserNotFound
+
+
+async def delete_user(session: AsyncSession, user_id: int | str) -> None:
+    try:
+        user = await get_user_by_id(session, int(user_id))
+
+        await session.delete(user)
+        await session.commit()
     except NoResultFound:
         raise UserNotFound

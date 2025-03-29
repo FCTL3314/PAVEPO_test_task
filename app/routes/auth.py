@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header, Response
 from httpx import HTTPStatusError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
@@ -11,6 +11,7 @@ from app.repository.auth import (
     get_or_create_user_by_yandex_user,
     get_user_by_id,
     update_user,
+    delete_user,
 )
 from app.schemas.auth import (
     AuthTokens,
@@ -81,6 +82,29 @@ async def update_user_me(
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found")
     updated_user = await update_user(session, current_user, updated_user)
     return updated_user
+
+
+@router.patch("/user/{user_id}/delete/")
+async def user_delete(
+    user_id: int,
+    session: AsyncSession = SessionDep,
+    authorization: str = Header(...),
+) -> Response:
+    try:
+        current_user = await get_current_user(session, authorization)
+
+        if not current_user.is_superuser:
+            raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Not allowed")
+    except UserNotFound:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found")
+
+    try:
+        await delete_user(session, user_id)
+    except UserNotFound:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="User to delete was not found"
+        )
+    return Response(status_code=HTTPStatus.NO_CONTENT)
 
 
 @router.post("/token/refresh", response_model=AuthTokens)
